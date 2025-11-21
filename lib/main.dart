@@ -9,6 +9,7 @@ import 'screens/qr_scanner_screen.dart';
 import 'screens/attendance_history_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/not_found_screen.dart';
+import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,15 +19,20 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    // Log error but continue - app can still work without Firebase
     debugPrint('Firebase initialization error: $e');
   }
 
-  runApp(const StudentApp());
+  // Check for logged in user
+  final authService = AuthService();
+  final isLoggedIn = authService.currentUser != null;
+
+  runApp(StudentApp(initialRoute: isLoggedIn ? '/home' : '/login'));
 }
 
 class StudentApp extends StatelessWidget {
-  const StudentApp({super.key});
+  final String initialRoute;
+
+  const StudentApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +49,7 @@ class StudentApp extends StatelessWidget {
         ),
         textTheme: GoogleFonts.robotoTextTheme(),
       ),
-      initialRoute: '/login',
+      initialRoute: initialRoute,
       routes: {
         '/login': (context) => const LoginScreen(),
         '/profile-setup': (context) => const ProfileSetupScreen(),

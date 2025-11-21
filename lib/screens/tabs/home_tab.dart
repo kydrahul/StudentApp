@@ -3,7 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../constants/colors.dart';
 import '../../constants/text_styles.dart';
 import '../../models/data_models.dart';
-import '../../data/mock_data.dart';
+import '../../services/api_service.dart';
 import '../../widgets/common/search_bar.dart';
 import '../../widgets/cards/class_item_card.dart';
 import '../../widgets/cards/idle_item_card.dart';
@@ -18,7 +18,10 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  // ... existing state ...
+  final ApiService _apiService = ApiService();
+  Map<String, List<ScheduleItem>> _schedule = {};
+  bool _isLoading = true;
+
   String locationStatus = 'neutral'; // neutral, verifying, success, error
   String? lastVerified;
   bool canScan = false;
@@ -30,6 +33,47 @@ class _HomeTabState extends State<HomeTab> {
     'Thursday',
     'Friday'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSchedule();
+    // Set current day index based on actual day
+    final now = DateTime.now();
+    if (now.weekday >= 1 && now.weekday <= 5) {
+      currentDayIndex = now.weekday - 1;
+    }
+  }
+
+  Future<void> _fetchSchedule() async {
+    try {
+      final timetableData = await _apiService.getTimetable();
+      final Map<String, List<ScheduleItem>> parsedSchedule = {};
+
+      timetableData.forEach((day, classes) {
+        parsedSchedule[day] = (classes as List).map((json) {
+          // Add status and other fields if missing from timetable API
+          return ScheduleItem.fromJson({
+            ...json,
+            'status': 'Upcoming', // Default status
+            'attendance': 0, // Default attendance
+          });
+        }).toList();
+      });
+
+      if (mounted) {
+        setState(() {
+          _schedule = parsedSchedule;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching schedule: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   void _showScanner() {
     Navigator.pushNamed(context, '/qr-scanner');
@@ -71,11 +115,14 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   String _getDateString(int index) {
-    // Mock date logic
-    final todayIndex = 2; // Wed
-    final diff = index - todayIndex;
-    final date = DateTime.now().add(Duration(days: diff));
-    // Simple formatting
+    final now = DateTime.now();
+    // Calculate date based on current day index vs target index
+    // This is a simple approximation, assuming the week starts on Monday
+    final currentWeekday = now.weekday; // 1 = Mon, 7 = Sun
+    final targetWeekday = index + 1;
+    final diff = targetWeekday - currentWeekday;
+    final date = now.add(Duration(days: diff));
+
     final months = [
       "Jan",
       "Feb",
@@ -96,136 +143,149 @@ class _HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     final currentDayName = daysOfWeek[currentDayIndex];
-    final todaysClasses = mockSchedule[currentDayName] ?? [];
+    final todaysClasses = _schedule[currentDayName] ?? [];
     final hours = List.generate(10, (i) => i + 9); // 9 to 18
 
     return Column(
       children: [
         const CustomSearchBar(),
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            children: [
-              // Actions
-              _buildScanButton(),
-              const SizedBox(height: 12),
-              _buildVerifyButton(),
-              if (locationStatus == 'success')
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    "Last verified: $lastVerified • Valid for 1h",
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.gray400),
-                    textAlign: TextAlign.center,
+          child: RefreshIndicator(
+            onRefresh: _fetchSchedule,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              children: [
+                // Actions
+                _buildScanButton(),
+                const SizedBox(height: 12),
+                _buildVerifyButton(),
+                if (locationStatus == 'success')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      "Last verified: $lastVerified • Valid for 1h",
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.gray400),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
+
+                const SizedBox(height: 32),
+
+                // Classes Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Classes",
+                            style: AppTextStyles.h3
+                                .copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text(
+                            "$currentDayName, ${_getDateString(currentDayIndex)}",
+                            style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.gray500,
+                                fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        _buildIconButton(LucideIcons.calendar, () {
+                          final now = DateTime.now();
+                          if (now.weekday >= 1 && now.weekday <= 5) {
+                            setState(() => currentDayIndex = now.weekday - 1);
+                          }
+                        }, active: true),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            border: Border.all(color: AppColors.gray100),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: Row(
+                            children: [
+                              _buildIconButton(LucideIcons.chevronLeft,
+                                  () => _changeDay('prev'),
+                                  size: 20, padding: 6),
+                              Container(
+                                  width: 1,
+                                  height: 16,
+                                  color: AppColors.gray100,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 4)),
+                              _buildIconButton(LucideIcons.chevronRight,
+                                  () => _changeDay('next'),
+                                  size: 20, padding: 6),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildIconButton(LucideIcons.maximize2, _showTimetable),
+                      ],
+                    ),
+                  ],
                 ),
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
-              // Classes Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Classes",
-                          style: AppTextStyles.h3
-                              .copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      Text(
-                          "$currentDayName, ${_getDateString(currentDayIndex)}",
-                          style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.gray500,
-                              fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      _buildIconButton(LucideIcons.calendar, () {
-                        setState(() => currentDayIndex = 2);
-                      }, active: true),
-                      const SizedBox(width: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          border: Border.all(color: AppColors.gray100),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.all(4),
-                        child: Row(
-                          children: [
-                            _buildIconButton(LucideIcons.chevronLeft,
-                                () => _changeDay('prev'),
-                                size: 20, padding: 6),
-                            Container(
-                                width: 1,
-                                height: 16,
-                                color: AppColors.gray100,
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 4)),
-                            _buildIconButton(LucideIcons.chevronRight,
-                                () => _changeDay('next'),
-                                size: 20, padding: 6),
-                          ],
-                        ),
+                // Timeline
+                _isLoading
+                    ? const Center(
+                        child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: CircularProgressIndicator(),
+                      ))
+                    : Stack(
+                        children: [
+                          Positioned(
+                            left: 29,
+                            top: 8,
+                            bottom: 0,
+                            child:
+                                Container(width: 2, color: AppColors.gray100),
+                          ),
+                          Column(
+                            children: hours.map((hour) {
+                              final classItem = todaysClasses.firstWhere(
+                                (c) => c.start == hour,
+                                orElse: () => ScheduleItem(
+                                    id: -1,
+                                    start: -1,
+                                    end: -1,
+                                    subject: "",
+                                    faculty: "",
+                                    credits: 0,
+                                    attendance: 0,
+                                    status: ""),
+                              );
+
+                              final timeStr = "$hour:00";
+                              final endTimeStr = "${hour + 1}:00";
+
+                              if (classItem.id != -1) {
+                                return ClassItemCard(
+                                  startTime: timeStr,
+                                  endTime: endTimeStr,
+                                  subject: classItem.subject,
+                                  status: classItem.status,
+                                  instructor: classItem.faculty,
+                                  credits: classItem.credits,
+                                  attendance: classItem.attendance,
+                                );
+                              } else {
+                                return IdleItemCard(time: timeStr);
+                              }
+                            }).toList(),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      _buildIconButton(LucideIcons.maximize2, _showTimetable),
-                    ],
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Timeline
-              Stack(
-                children: [
-                  Positioned(
-                    left: 29,
-                    top: 8,
-                    bottom: 0,
-                    child: Container(width: 2, color: AppColors.gray100),
-                  ),
-                  Column(
-                    children: hours.map((hour) {
-                      final classItem = todaysClasses.firstWhere(
-                        (c) => c.start == hour,
-                        orElse: () => ScheduleItem(
-                            id: -1,
-                            start: -1,
-                            end: -1,
-                            subject: "",
-                            faculty: "",
-                            credits: 0,
-                            attendance: 0,
-                            status: ""),
-                      );
-
-                      final timeStr = "$hour:00";
-                      final endTimeStr = "${hour + 1}:00";
-
-                      if (classItem.id != -1) {
-                        return ClassItemCard(
-                          startTime: timeStr,
-                          endTime: endTimeStr,
-                          subject: classItem.subject,
-                          status: classItem.status,
-                          instructor: classItem.faculty,
-                          credits: classItem.credits,
-                          attendance: classItem.attendance,
-                        );
-                      } else {
-                        return IdleItemCard(time: timeStr);
-                      }
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

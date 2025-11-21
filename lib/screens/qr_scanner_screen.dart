@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-// import 'package:geolocator/geolocator.dart'; // Disabled - Gradle issue
+import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../constants/colors.dart';
 import '../services/api_service.dart';
@@ -29,12 +29,14 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       throw Exception('Location permission denied');
     }
 
-    // TODO: Replace with actual geolocator when Gradle issue is fixed
-    // Using placeholder coordinates (IIITNR campus approximate location)
+    final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
     return {
-      'latitude': 21.1458, // IIITNR Naya Raipur
-      'longitude': 81.7362,
-      'accuracy': 10.0,
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+      'accuracy': position.accuracy,
     };
   }
 

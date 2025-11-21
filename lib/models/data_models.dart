@@ -18,10 +18,33 @@ class ScheduleItem {
     required this.attendance,
     required this.status,
   });
+
+  factory ScheduleItem.fromJson(Map<String, dynamic> json) {
+    // Parse time string "09:00 - 10:00" to start/end integers
+    final timeStr = json['time'] as String? ?? "09:00 - 10:00";
+    final parts = timeStr.split(' - ');
+    final startStr = parts[0].split(':')[0];
+    final endStr = parts.length > 1
+        ? parts[1].split(':')[0]
+        : (int.parse(startStr) + 1).toString();
+
+    return ScheduleItem(
+      id: json['id'] is String
+          ? int.tryParse(json['id']) ?? 0
+          : json['id'] ?? 0,
+      start: int.tryParse(startStr) ?? 9,
+      end: int.tryParse(endStr) ?? 10,
+      subject: json['courseName'] ?? '',
+      faculty: json['faculty'] ?? '',
+      credits: json['credits'] ?? 3,
+      attendance: json['attendance'] ?? 0,
+      status: json['status'] ?? 'Upcoming',
+    );
+  }
 }
 
 class Course {
-  final String id; // Changed to String to match backend
+  final String id;
   final String name;
   final String faculty;
   final int credits;
@@ -95,7 +118,7 @@ class ClassSchedule {
 }
 
 class AttendanceRecord {
-  final String id; // Changed to String
+  final String id;
   final String date;
   final String time;
   final String status; // "Present", "Absent"
@@ -110,9 +133,17 @@ class AttendanceRecord {
   factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
     return AttendanceRecord(
       id: json['id']?.toString() ?? '',
-      date: json['date'] ?? '',
-      time: json['time'] ?? '',
-      status: json['status'] ?? 'Absent',
+      date: json['markedAt'] != null
+          ? DateTime.parse(json['markedAt']).toLocal().toString().split(' ')[0]
+          : (json['date'] ?? ''),
+      time: json['markedAt'] != null
+          ? DateTime.parse(json['markedAt'])
+              .toLocal()
+              .toString()
+              .split(' ')[1]
+              .substring(0, 5)
+          : (json['time'] ?? ''),
+      status: json['status'] == 'present' ? 'Present' : 'Absent',
     );
   }
 }

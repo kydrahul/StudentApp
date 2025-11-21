@@ -3,6 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../constants/colors.dart';
 import '../../constants/text_styles.dart';
 import '../account_screen.dart';
+import '../../services/auth_service.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
@@ -90,8 +91,12 @@ class SettingsTab extends StatelessWidget {
                 iconBg: AppColors.red50,
                 label: "Logout",
                 labelColor: AppColors.red500,
-                onTap: () {
-                  Navigator.pushReplacementNamed(context, '/login');
+                onTap: () async {
+                  await AuthService().signOut();
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, '/login', (route) => false);
+                  }
                 },
               ),
             ],
