@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'constants/colors.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/not_found_screen.dart';
 
 void main() {
   runApp(const StudentApp());
@@ -30,6 +31,11 @@ class StudentApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
+      },
+      onUnknownRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (context) => const NotFoundScreen(),
+        );
       },
     );
   }

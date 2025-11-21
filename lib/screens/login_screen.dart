@@ -14,10 +14,10 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo Box
+            // Logo Box – larger and tighter padding
             Container(
-              width: 96,
-              height: 96,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -29,28 +29,17 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(8), // reduced padding
               child: Image.asset(
-                "assets/logo.png",
-                fit: BoxFit.contain,
+                'assets/home-logo.png',
+                fit: BoxFit.cover, // zoomed a bit
                 errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.school,
-                    size: 40,
-                    color: AppColors.blue600),
+                  Icons.school,
+                  size: 40,
+                  color: AppColors.blue600,
+                ),
               ),
             ),
-            const SizedBox(height: 24),
-
-            Text(
-              "DSPM IIITNR ATTENDANCE",
-              style: AppTextStyles.header.copyWith(
-                color: AppColors.blue600,
-                fontSize: 14,
-                letterSpacing: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
             const SizedBox(height: 48),
 
             // Login Button
@@ -72,21 +61,22 @@ class LoginScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Google Icon SVG replacement (simple colored text/icon for now)
+                  // Placeholder for Google‑style icon
                   const Icon(Icons.g_mobiledata, size: 32, color: Colors.blue),
                   const SizedBox(width: 12),
                   Text(
-                    "Login via Institute Email",
-                    style: AppTextStyles.h3.copyWith(fontSize: 16),
+                    'Login via Institute Email',
+                    style: AppTextStyles.h3,
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 32),
 
+            // Disclaimer
             Text(
-              "By logging in, you agree to the Terms of Service and Privacy Policy of your institution.",
+              'By logging in, you agree to the Terms of Service and '
+              'Privacy Policy of your institution.',
               style: AppTextStyles.bodySmall.copyWith(color: AppColors.gray400),
               textAlign: TextAlign.center,
             ),
