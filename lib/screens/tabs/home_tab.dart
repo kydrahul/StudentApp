@@ -8,7 +8,6 @@ import '../../widgets/common/search_bar.dart';
 import '../../widgets/cards/class_item_card.dart';
 import '../../widgets/cards/idle_item_card.dart';
 
-import '../../widgets/overlays/scanner_overlay.dart';
 import '../weekly_timetable_screen.dart';
 
 class HomeTab extends StatefulWidget {
@@ -33,16 +32,7 @@ class _HomeTabState extends State<HomeTab> {
   ];
 
   void _showScanner() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ScannerOverlay(
-        onClose: () => Navigator.pop(context),
-        onSimulateScan: () {
-          // Logic after scan success if needed
-        },
-      ),
-    );
+    Navigator.pushNamed(context, '/qr-scanner');
   }
 
   void _showTimetable() {

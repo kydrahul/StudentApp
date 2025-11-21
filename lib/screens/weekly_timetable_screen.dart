@@ -1,14 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 
 enum CellType { header, time, classCell, idle, breakCell }
 
-class WeeklyTimetableScreen extends StatelessWidget {
+class WeeklyTimetableScreen extends StatefulWidget {
   const WeeklyTimetableScreen({super.key});
 
   @override
+  State<WeeklyTimetableScreen> createState() => _WeeklyTimetableScreenState();
+}
+
+class _WeeklyTimetableScreenState extends State<WeeklyTimetableScreen> {
+  final ApiService _apiService = ApiService();
+  Map<String, dynamic> _timetable = {};
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTimetable();
+  }
+
+  Future<void> _fetchTimetable() async {
+    try {
+      final data = await _apiService.getTimetable();
+      setState(() {
+        _timetable = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: AppColors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Error: $_error'),
+              ElevatedButton(
+                onPressed: _fetchTimetable,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
@@ -101,7 +158,7 @@ class WeeklyTimetableScreen extends StatelessWidget {
               // Header Row
               _buildHeaderRow(),
 
-              // Time Rows - All empty
+              // Time Rows
               _buildTimeRow("9:00"),
               _buildTimeRow("10:00"),
               _buildTimeRow("11:00"),
@@ -140,14 +197,40 @@ class WeeklyTimetableScreen extends StatelessWidget {
   }
 
   Widget _buildTimeRow(String time) {
+    // Helper to find class for a specific day and time
+    String getClassFor(String day, String timeSlot) {
+      if (_timetable[day] == null) return "";
+
+      final classes = _timetable[day] as List<dynamic>;
+      // Normalize time strings for comparison (e.g., "9:00" vs "09:00 - 10:00")
+      final slotTime = timeSlot.split(':')[0].padLeft(2, '0');
+
+      for (var cls in classes) {
+        final classTime = cls['time']
+            .toString()
+            .split(' - ')[0]
+            .split(':')[0]
+            .padLeft(2, '0');
+        if (classTime == slotTime) {
+          return "${cls['courseCode']}\n${cls['room']}";
+        }
+      }
+      return "";
+    }
+
     return Row(
       children: [
         _buildCell(time, CellType.time, width: 40, height: 48),
-        _buildCell("", CellType.classCell, width: 60, height: 48),
-        _buildCell("", CellType.classCell, width: 60, height: 48),
-        _buildCell("", CellType.classCell, width: 60, height: 48),
-        _buildCell("", CellType.classCell, width: 60, height: 48),
-        _buildCell("", CellType.classCell, width: 60, height: 48),
+        _buildCell(getClassFor("Monday", time), CellType.classCell,
+            width: 60, height: 48),
+        _buildCell(getClassFor("Tuesday", time), CellType.classCell,
+            width: 60, height: 48),
+        _buildCell(getClassFor("Wednesday", time), CellType.classCell,
+            width: 60, height: 48),
+        _buildCell(getClassFor("Thursday", time), CellType.classCell,
+            width: 60, height: 48),
+        _buildCell(getClassFor("Friday", time), CellType.classCell,
+            width: 60, height: 48),
       ],
     );
   }
@@ -205,16 +288,17 @@ class WeeklyTimetableScreen extends StatelessWidget {
         );
         break;
       case CellType.classCell:
-        bgColor = AppColors.white;
+        bgColor = text.isNotEmpty ? AppColors.white : AppColors.gray50;
         textColor = AppColors.black;
         fontWeight = FontWeight.normal;
         fontSize = 8;
-        padding = const EdgeInsets.symmetric(horizontal: 2, vertical: 24);
+        padding = const EdgeInsets.symmetric(
+            horizontal: 2, vertical: 12); // Adjusted padding
         textStyle = TextStyle(
           fontSize: fontSize,
           fontWeight: fontWeight,
           color: textColor,
-          height: 1.0,
+          height: 1.2,
         );
         break;
       case CellType.idle:

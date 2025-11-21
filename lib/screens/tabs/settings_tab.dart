@@ -12,9 +12,9 @@ class SettingsTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       children: [
-        Text("Settings", style: AppTextStyles.h1.copyWith(fontWeight: FontWeight.bold)),
+        Text("Settings",
+            style: AppTextStyles.h1.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 24),
-
         Container(
           decoration: BoxDecoration(
             color: AppColors.white,
@@ -39,8 +39,20 @@ class SettingsTab extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AccountScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const AccountScreen()),
                   );
+                },
+              ),
+              _buildDivider(),
+              _buildSettingItem(
+                context,
+                icon: LucideIcons.clipboardList,
+                iconColor: AppColors.green600,
+                iconBg: AppColors.green50,
+                label: "Attendance History",
+                onTap: () {
+                  Navigator.pushNamed(context, '/attendance-history');
                 },
               ),
               _buildDivider(),
@@ -85,14 +97,17 @@ class SettingsTab extends StatelessWidget {
             ],
           ),
         ),
-        
         const SizedBox(height: 32),
-        Center(child: Text("Version 1.0.0", style: AppTextStyles.bodySmall.copyWith(color: AppColors.gray400))),
+        Center(
+            child: Text("Version 1.0.0",
+                style: AppTextStyles.bodySmall
+                    .copyWith(color: AppColors.gray400))),
       ],
     );
   }
 
-  Widget _buildSettingItem(BuildContext context, {
+  Widget _buildSettingItem(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required Color iconBg,
@@ -127,7 +142,8 @@ class SettingsTab extends StatelessWidget {
                 ),
               ],
             ),
-            const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.gray400),
+            const Icon(LucideIcons.chevronRight,
+                size: 16, color: AppColors.gray400),
           ],
         ),
       ),

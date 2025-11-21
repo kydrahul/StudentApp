@@ -21,7 +21,7 @@ class ScheduleItem {
 }
 
 class Course {
-  final int id;
+  final String id; // Changed to String to match backend
   final String name;
   final String faculty;
   final int credits;
@@ -44,6 +44,24 @@ class Course {
     required this.contact,
     required this.schedule,
   });
+
+  factory Course.fromJson(Map<String, dynamic> json) {
+    return Course(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      faculty: json['faculty'] ?? '',
+      credits: json['credits'] ?? 0,
+      attendance: json['attendance'] ?? 0,
+      totalClasses: json['totalClasses'] ?? 0,
+      attended: json['attended'] ?? 0,
+      missed: json['missed'] ?? 0,
+      contact: ContactInfo.fromJson(json['contact'] ?? {}),
+      schedule: (json['schedule'] as List<dynamic>?)
+              ?.map((e) => ClassSchedule.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
 }
 
 class ContactInfo {
@@ -51,6 +69,13 @@ class ContactInfo {
   final String email;
 
   ContactInfo({required this.phone, required this.email});
+
+  factory ContactInfo.fromJson(Map<String, dynamic> json) {
+    return ContactInfo(
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
+    );
+  }
 }
 
 class ClassSchedule {
@@ -59,10 +84,18 @@ class ClassSchedule {
   final String room;
 
   ClassSchedule({required this.day, required this.time, required this.room});
+
+  factory ClassSchedule.fromJson(Map<String, dynamic> json) {
+    return ClassSchedule(
+      day: json['day'] ?? '',
+      time: json['time'] ?? '',
+      room: json['room'] ?? '',
+    );
+  }
 }
 
 class AttendanceRecord {
-  final int id;
+  final String id; // Changed to String
   final String date;
   final String time;
   final String status; // "Present", "Absent"
@@ -73,4 +106,13 @@ class AttendanceRecord {
     required this.time,
     required this.status,
   });
+
+  factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
+    return AttendanceRecord(
+      id: json['id']?.toString() ?? '',
+      date: json['date'] ?? '',
+      time: json['time'] ?? '',
+      status: json['status'] ?? 'Absent',
+    );
+  }
 }
