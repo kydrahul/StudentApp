@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../constants/colors.dart';
 import '../../constants/text_styles.dart';
 import '../../models/data_models.dart';
@@ -88,19 +90,81 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  void _handleVerifyLocation() {
+  void _handleVerifyLocation() async {
     setState(() {
       locationStatus = 'verifying';
     });
-    Future.delayed(const Duration(milliseconds: 1500), () {
+
+    try {
+      // Check location permission
+      final permission = await Permission.location.request();
+      if (!permission.isGranted) {
+        setState(() => locationStatus = 'neutral');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission is required'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get current position
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Location request timed out');
+        },
+      );
+
+      // Call backend to verify location
+      final result = await _apiService.verifyLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+      );
+
       if (mounted) {
         setState(() {
           locationStatus = 'success';
           canScan = true;
           lastVerified = TimeOfDay.now().format(context);
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Location verified!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          locationStatus = 'error';
+          canScan = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+
+        // Reset to neutral after showing error
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() => locationStatus = 'neutral');
+          }
+        });
+      }
+    }
   }
 
   void _changeDay(String direction) {

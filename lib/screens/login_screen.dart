@@ -33,9 +33,21 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      // Validate email domain
+      final email = userCredential.user?.email ?? '';
+      if (!email.endsWith('@iiitnr.edu.in')) {
+        setState(() {
+          _errorMessage =
+              'Only IIITNR students can access this app.\nPlease use your @iiitnr.edu.in email.';
+          _isLoading = false;
+        });
+        await _authService.signOut();
+        return;
+      }
+
       // Check if profile exists
       try {
-        await _apiService.getDashboard();
+        await _apiService.getProfile();
         // Profile exists, navigate to home
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/home');
@@ -141,6 +153,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
             ),
+            const SizedBox(height: 12),
+
+            // Email domain hint
+            Text(
+              '(email ends with @iiitnr.edu.in)',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.gray500,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
             const SizedBox(height: 32),
 
             // Disclaimer

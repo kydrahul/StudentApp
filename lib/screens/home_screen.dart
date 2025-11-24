@@ -3,6 +3,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../constants/colors.dart';
 import '../widgets/common/custom_header.dart';
 import '../widgets/common/profile_popup.dart';
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/courses_tab.dart';
 import 'tabs/settings_tab.dart';
@@ -15,14 +17,44 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-  bool _isProfileOpen = false;
+  int _selectedIndex = 0;
+  bool _showProfilePopup = false;
+  Map<String, dynamic>? _profileData;
+  final ApiService _apiService = ApiService();
+  final AuthService _authService = AuthService();
 
   final List<Widget> _tabs = [
     const HomeTab(),
     const CoursesTab(),
     const SettingsTab(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final profile = await _apiService.getProfile();
+      final user = _authService.getCurrentUser();
+
+      if (mounted) {
+        setState(() {
+          _profileData = profile;
+          _profileData!['photoUrl'] = user?.photoURL;
+          _profileData!['email'] = user?.email;
+        });
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+    }
+  }
+
+  void _toggleProfilePopup() {
+    setState(() => _showProfilePopup = !_showProfilePopup);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,31 +65,19 @@ class _HomeScreenState extends State<HomeScreen> {
           SafeArea(
             child: Column(
               children: [
-                // Header only on Home Tab
-                if (_currentIndex == 0)
-                  CustomHeader(
-                    onProfileClick: () {
-                      setState(() {
-                        _isProfileOpen = !_isProfileOpen;
-                      });
-                    },
-                  ),
-                
-                Expanded(
-                  child: _tabs[_currentIndex],
-                ),
+                // Show header only on Home tab
+                if (_selectedIndex == 0)
+                  CustomHeader(onProfileClick: _toggleProfilePopup),
+                Expanded(child: _tabs[_selectedIndex]),
               ],
             ),
           ),
 
           // Profile Popup Overlay
-          if (_isProfileOpen)
+          if (_showProfilePopup)
             ProfilePopup(
-              onClose: () {
-                setState(() {
-                  _isProfileOpen = false;
-                });
-              },
+              onClose: _toggleProfilePopup,
+              profileData: _profileData,
             ),
         ],
       ),
@@ -91,9 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = _currentIndex == index;
+    final isSelected = _selectedIndex == index;
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () => setState(() => _selectedIndex = index),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

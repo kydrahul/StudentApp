@@ -28,11 +28,12 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _fetchProfile() async {
     try {
-      final dashboard = await _apiService.getDashboard();
+      final profile = await _apiService.getProfile();
       if (mounted) {
         setState(() {
-          _profileData = dashboard['student'];
+          _profileData = profile;
           _isLoading = false;
+          _errorMessage = null;
         });
       }
     } catch (e) {
@@ -62,128 +63,160 @@ class _AccountScreenState extends State<AccountScreen> {
                           const Icon(LucideIcons.alertCircle,
                               size: 48, color: AppColors.red500),
                           const SizedBox(height: 16),
-                          Text(_errorMessage!, textAlign: TextAlign.center),
+                          Text(
+                            _errorMessage!.contains('Profile not found')
+                                ? 'Your profile setup is incomplete.'
+                                : _errorMessage!,
+                            textAlign: TextAlign.center,
+                          ),
                           const SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: _fetchProfile,
-                            child: const Text('Retry'),
+                            onPressed: () {
+                              if (_errorMessage!
+                                  .contains('Profile not found')) {
+                                Navigator.pushNamed(context, '/profile-setup');
+                              } else {
+                                setState(() => _isLoading = true);
+                                _fetchProfile();
+                              }
+                            },
+                            child: Text(
+                                _errorMessage!.contains('Profile not found')
+                                    ? 'Complete Setup'
+                                    : 'Retry'),
                           ),
                         ],
                       ),
                     ),
                   )
-                : Column(
-                    children: [
-                      // Header
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.gray200),
-                                ),
-                                child: const Icon(LucideIcons.chevronLeft,
-                                    size: 20, color: AppColors.gray600),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Text("My Account",
-                                style: AppTextStyles.h2
-                                    .copyWith(fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Profile Info
-                      Column(
+                : RefreshIndicator(
+                    onRefresh: _fetchProfile,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
                         children: [
-                          Container(
-                            width: 96,
-                            height: 96,
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF60A5FA), Color(0xFFC084FC)],
-                                begin: Alignment.bottomLeft,
-                                end: Alignment.topRight,
-                              ),
+                          // Header
+                          Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () => Navigator.pop(context),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.white,
+                                      shape: BoxShape.circle,
+                                      border:
+                                          Border.all(color: AppColors.gray200),
+                                    ),
+                                    child: const Icon(LucideIcons.chevronLeft,
+                                        size: 20, color: AppColors.gray600),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Text("My Account",
+                                    style: AppTextStyles.h2
+                                        .copyWith(fontWeight: FontWeight.bold)),
+                              ],
                             ),
-                            child: Container(
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.white,
-                              ),
-                              padding: const EdgeInsets.all(2),
-                              child: ClipOval(
-                                child: Image.network(
-                                  "https://api.dicebear.com/7.x/avataaars/svg?seed=${_profileData?['name'] ?? 'User'}",
-                                  fit: BoxFit.cover,
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Profile Info
+                          Column(
+                            children: [
+                              Container(
+                                width: 96,
+                                height: 96,
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Color(0xFF60A5FA),
+                                      Color(0xFFC084FC)
+                                    ],
+                                    begin: Alignment.bottomLeft,
+                                    end: Alignment.topRight,
+                                  ),
+                                ),
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.white,
+                                  ),
+                                  padding: const EdgeInsets.all(2),
+                                  child: ClipOval(
+                                    child: Image.network(
+                                      _authService.currentUser?.photoURL ??
+                                          "https://api.dicebear.com/7.x/avataaars/svg?seed=${Uri.encodeComponent(_profileData?['name'] ?? 'User')}",
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(Icons.person,
+                                                  size: 48,
+                                                  color: AppColors.gray400),
+                                    ),
+                                  ),
                                 ),
                               ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _profileData?['name'] ?? 'N/A',
+                                style: AppTextStyles.h1
+                                    .copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                _profileData?['department'] ?? 'N/A',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.gray500,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          // Details List
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.gray100),
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildDetailRow(
+                                      "Roll Number",
+                                      _profileData?['rollNo']?.toString() ??
+                                          'N/A'),
+                                  _buildDivider(),
+                                  _buildDetailRow("Department",
+                                      _profileData?['department'] ?? 'N/A'),
+                                  _buildDivider(),
+                                  _buildDetailRow(
+                                      "Passing Year",
+                                      _profileData?['passingYear']
+                                              ?.toString() ??
+                                          'N/A'),
+                                  _buildDivider(),
+                                  _buildDetailRow(
+                                      "Email",
+                                      _authService.currentUser?.email ??
+                                          _profileData?['email'] ??
+                                          'N/A'),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _profileData?['name'] ?? 'N/A',
-                            style: AppTextStyles.h1
-                                .copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            _profileData?['department'] ??
-                                _profileData?['branch'] ??
-                                'N/A',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.gray500,
-                                fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 32),
-
-                      // Details List
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.gray100),
-                          ),
-                          child: Column(
-                            children: [
-                              _buildDetailRow("Roll Number",
-                                  _profileData?['rollNo'] ?? 'N/A'),
-                              _buildDivider(),
-                              _buildDetailRow(
-                                  "Branch",
-                                  _profileData?['department'] ??
-                                      _profileData?['branch'] ??
-                                      'N/A'),
-                              _buildDivider(),
-                              _buildDetailRow(
-                                  "Year",
-                                  _profileData?['year'] ??
-                                      _profileData?['passingYear'] ??
-                                      'N/A'),
-                              _buildDivider(),
-                              _buildDetailRow("Email",
-                                  _authService.currentUser?.email ?? 'N/A'),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
       ),
     );

@@ -1,5 +1,5 @@
 name: student_app
-description: "A new Flutter project."
+description: "IIITNR Attendance Student App"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -27,7 +27,7 @@ dependencies:
   shared_preferences: ^2.3.4
   flutter_secure_storage: ^9.2.2
 
-# ADD THIS SECTION - Forces compatible Android plugin version
+# Forces compatible Android plugin version
 dependency_overrides:
   geolocator_android: 4.2.1
 
@@ -35,6 +35,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -42,3 +43,12 @@ flutter:
     - assets/home-logo.png
     - assets/logo.png
     - assets/404error.jpg
+    - assets/withoutlogo.png
+    - assets/apklogo.png
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/apklogo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/apklogo.png"

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/colors.dart';
 import '../constants/text_styles.dart';
 import '../services/api_service.dart';
@@ -16,26 +17,120 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   final _nameController = TextEditingController();
   final _rollNoController = TextEditingController();
-  final _departmentController = TextEditingController();
-  final _yearController = TextEditingController();
-  final _batchController = TextEditingController();
-  final _semesterController = TextEditingController();
+
+  String? _selectedDepartment;
+  String? _selectedPassingYear;
 
   bool _isLoading = false;
 
-  Future<void> _submitProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+  final List<String> departments = ['CSE', 'DSAI', 'ECE'];
+  final List<String> passingYears = [
+    '2024',
+    '2025',
+    '2026',
+    '2027',
+    '2028',
+    '2029'
+  ];
 
+  Future<void> _showConfirmationDialog() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedDepartment == null || _selectedPassingYear == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all required fields'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Your Details'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '⚠️ You won\'t be able to change this later',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildConfirmRow('Full Name', _nameController.text.trim()),
+              _buildConfirmRow('Roll Number', _rollNoController.text.trim()),
+              _buildConfirmRow('Department', _selectedDepartment!),
+              _buildConfirmRow('Passing Year', _selectedPassingYear!),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Edit'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.blue600,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _submitProfile();
+    }
+  }
+
+  Widget _buildConfirmRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.gray600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitProfile() async {
     setState(() => _isLoading = true);
 
     try {
       await _apiService.createProfile(
         name: _nameController.text.trim(),
-        rollNo: _rollNoController.text.trim(),
-        department: _departmentController.text.trim(),
-        year: _yearController.text.trim(),
-        batch: _batchController.text.trim(),
-        semester: _semesterController.text.trim(),
+        rollNo: int.parse(_rollNoController.text.trim()),
+        department: _selectedDepartment!,
+        passingYear: int.parse(_selectedPassingYear!),
       );
 
       if (mounted) {
@@ -59,78 +154,189 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Complete Your Profile'),
-        backgroundColor: AppColors.white,
-        automaticallyImplyLeading: false,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Student Information', style: AppTextStyles.h2),
-              const SizedBox(height: 24),
-              _buildTextField('Full Name', _nameController, required: true),
-              _buildTextField('Roll Number', _rollNoController, required: true),
-              _buildTextField('Department', _departmentController),
-              _buildTextField('Year', _yearController),
-              _buildTextField('Batch', _batchController),
-              _buildTextField('Semester', _semesterController),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitProfile,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue600,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // App Bar
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: AppColors.white,
+              child: Row(
+                children: [
+                  Text(
+                    'Complete Your Profile',
+                    style: AppTextStyles.h2,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                ],
+              ),
+            ),
+            // Scrollable Form
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Student Information', style: AppTextStyles.h2),
+                      const SizedBox(height: 8),
+                      Text(
+                        'All fields are required',
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.gray500),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Full Name
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Full Name *',
+                          hintText: 'Enter your full name',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        )
-                      : const Text('Continue'),
+                          filled: true,
+                          fillColor: AppColors.white,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'[a-zA-Z ]')),
+                        ],
+                        validator: (value) {
+                          if (value?.isEmpty ?? true) return 'Required';
+                          if (RegExp(r'\d').hasMatch(value!)) {
+                            return 'Name cannot contain numbers';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Roll Number
+                      TextFormField(
+                        controller: _rollNoController,
+                        keyboardType: TextInputType.number,
+                        maxLength: 9,
+                        decoration: InputDecoration(
+                          labelText: 'Roll Number *',
+                          hintText: 'e.g., 241020463',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.white,
+                          counterText: '',
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(9),
+                        ],
+                        validator: (value) {
+                          if (value?.isEmpty ?? true) return 'Required';
+                          if (value!.length != 9) {
+                            return 'Roll number must be exactly 9 digits';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Department
+                      Text(
+                        'Department *',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...departments.map((dept) => RadioListTile<String>(
+                            title: Text(dept),
+                            value: dept,
+                            groupValue: _selectedDepartment,
+                            onChanged: (value) {
+                              setState(() => _selectedDepartment = value);
+                            },
+                            activeColor: AppColors.blue600,
+                            tileColor: AppColors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          )),
+                      const SizedBox(height: 24),
+
+                      // Passing Year
+                      Text(
+                        'Passing Out Year *',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: passingYears.map((year) {
+                          final isSelected = _selectedPassingYear == year;
+                          return ChoiceChip(
+                            label: Text(year),
+                            selected: isSelected,
+                            showCheckmark: false,
+                            onSelected: (selected) {
+                              setState(() => _selectedPassingYear = year);
+                            },
+                            selectedColor: AppColors.blue600,
+                            labelStyle: TextStyle(
+                              color:
+                                  isSelected ? Colors.white : AppColors.gray700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            backgroundColor: AppColors.white,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColors.blue600
+                                  : AppColors.gray200,
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Submit Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed:
+                              _isLoading ? null : _showConfirmationDialog,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.blue600,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Continue',
+                                  style: TextStyle(fontSize: 16)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller, {
-    bool required = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          filled: true,
-          fillColor: AppColors.white,
-        ),
-        validator: required
-            ? (value) => value?.isEmpty ?? true ? 'Required' : null
-            : null,
       ),
     );
   }
@@ -139,10 +345,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   void dispose() {
     _nameController.dispose();
     _rollNoController.dispose();
-    _departmentController.dispose();
-    _yearController.dispose();
-    _batchController.dispose();
-    _semesterController.dispose();
     super.dispose();
   }
 }

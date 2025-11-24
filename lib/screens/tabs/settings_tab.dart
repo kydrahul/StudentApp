@@ -48,17 +48,6 @@ class SettingsTab extends StatelessWidget {
               _buildDivider(),
               _buildSettingItem(
                 context,
-                icon: LucideIcons.clipboardList,
-                iconColor: AppColors.green600,
-                iconBg: AppColors.green50,
-                label: "Attendance History",
-                onTap: () {
-                  Navigator.pushNamed(context, '/attendance-history');
-                },
-              ),
-              _buildDivider(),
-              _buildSettingItem(
-                context,
                 icon: LucideIcons.fileText,
                 iconColor: AppColors.gray600,
                 iconBg: AppColors.gray50,

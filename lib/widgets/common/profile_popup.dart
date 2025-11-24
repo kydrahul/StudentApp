@@ -5,11 +5,23 @@ import '../../constants/text_styles.dart';
 
 class ProfilePopup extends StatelessWidget {
   final VoidCallback onClose;
+  final Map<String, dynamic>? profileData;
 
-  const ProfilePopup({super.key, required this.onClose});
+  const ProfilePopup({
+    super.key,
+    required this.onClose,
+    this.profileData,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final name = profileData?['name'] ?? 'Unknown User';
+    final department = profileData?['department'] ?? 'N/A';
+    final rollNo = profileData?['rollNo']?.toString() ?? 'N/A';
+    final email = profileData?['email'] ?? 'N/A';
+    final passingYear = profileData?['passingYear']?.toString() ?? 'N/A';
+    final photoUrl = profileData?['photoUrl'];
+
     return Stack(
       children: [
         // Backdrop
@@ -28,7 +40,7 @@ class ProfilePopup extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: Container(
-              width: 288, // w-72
+              width: 288,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: AppColors.white,
@@ -50,11 +62,13 @@ class ProfilePopup extends StatelessWidget {
                     alignment: Alignment.topRight,
                     child: GestureDetector(
                       onTap: onClose,
-                      child: const Icon(LucideIcons.xCircle, size: 20, color: AppColors.gray400),
+                      child: const Icon(LucideIcons.xCircle,
+                          size: 20, color: AppColors.gray400),
                     ),
                   ),
-                  
-                  // Profile Image
+                  const SizedBox(height: 12),
+
+                  // Profile Image from Google
                   Container(
                     width: 80,
                     height: 80,
@@ -62,7 +76,7 @@ class ProfilePopup extends StatelessWidget {
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [Color(0xFF60A5FA), Color(0xFFC084FC)], // blue-400 to purple-400
+                        colors: [Color(0xFF60A5FA), Color(0xFFC084FC)],
                         begin: Alignment.bottomLeft,
                         end: Alignment.topRight,
                       ),
@@ -74,20 +88,29 @@ class ProfilePopup extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.all(2),
                       child: ClipOval(
-                        child: Image.network(
-                          "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-                          fit: BoxFit.cover,
-                        ),
+                        child: photoUrl != null
+                            ? Image.network(
+                                photoUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.person,
+                                        size: 40, color: AppColors.gray400),
+                              )
+                            : const Icon(Icons.person,
+                                size: 40, color: AppColors.gray400),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Name & Branch
-                  Text("Alex Johnson", style: AppTextStyles.h3),
-                  Text("Computer Science", style: AppTextStyles.bodyMedium.copyWith(color: AppColors.gray500)),
+                  Text(name,
+                      style: AppTextStyles.h3, textAlign: TextAlign.center),
+                  Text(department,
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: AppColors.gray500)),
                   const SizedBox(height: 16),
-                  
+
                   // Details Box
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -97,11 +120,11 @@ class ProfilePopup extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildDetailRow("Roll No", "2023-CS-104"),
+                        _buildDetailRow("Roll No", rollNo),
                         const SizedBox(height: 12),
-                        _buildDetailRow("Year", "3rd Year"),
+                        _buildDetailRow("Email", email),
                         const SizedBox(height: 12),
-                        _buildDetailRow("Pass Out", "2026"),
+                        _buildDetailRow("Pass Out", passingYear),
                       ],
                     ),
                   ),
@@ -119,7 +142,14 @@ class ProfilePopup extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label.toUpperCase(), style: AppTextStyles.label),
-        Text(value, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.gray700)),
+        Flexible(
+          child: Text(
+            value,
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.gray700),
+            textAlign: TextAlign.right,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }

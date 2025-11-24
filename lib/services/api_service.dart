@@ -14,14 +14,67 @@ class ApiService {
     };
   }
 
+  // Get Student Profile
+  Future<Map<String, dynamic>> getProfile() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(
+            Uri.parse('${AppConfig.baseUrl}/student/profile'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['student'] ?? {};
+      } else if (response.statusCode == 404) {
+        throw Exception(
+            'Profile not found. Please complete your profile setup.');
+      } else {
+        throw Exception('Failed to fetch profile: ${response.body}');
+      }
+    } catch (e) {
+      print('Error in getProfile: $e');
+      rethrow;
+    }
+  }
+
+  // Verify Location (Geofence check)
+  Future<Map<String, dynamic>> verifyLocation({
+    required double latitude,
+    required double longitude,
+    double? accuracy,
+  }) async {
+    final response = await http
+        .post(
+          Uri.parse('${AppConfig.baseUrl}/student/verify-location'),
+          headers: await _getHeaders(),
+          body: jsonEncode({
+            'latitude': latitude,
+            'longitude': longitude,
+            'accuracy': accuracy,
+          }),
+        )
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 403) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Location verification failed');
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['error'] ?? 'Failed to verify location');
+    }
+  }
+
   // Create/Update Student Profile
   Future<Map<String, dynamic>> createProfile({
     required String name,
-    required String rollNo,
-    String? department,
-    String? year,
-    String? batch,
-    String? semester,
+    required int rollNo,
+    required String department,
+    required int passingYear,
   }) async {
     final response = await http.post(
       Uri.parse('${AppConfig.baseUrl}/student/profile'),
@@ -30,9 +83,7 @@ class ApiService {
         'name': name,
         'rollNo': rollNo,
         'department': department,
-        'year': year,
-        'batch': batch,
-        'semester': semester,
+        'passingYear': passingYear,
       }),
     );
 

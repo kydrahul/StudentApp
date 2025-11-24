@@ -64,4 +64,9 @@ class AuthService {
     await _auth.signOut();
     await _storage.delete(key: 'auth_token');
   }
+
+  // Get current user
+  User? getCurrentUser() {
+    return _auth.currentUser;
+  }
 }
