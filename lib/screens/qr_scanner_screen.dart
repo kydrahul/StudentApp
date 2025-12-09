@@ -46,8 +46,28 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // Get location
-      final location = await _getCurrentLocation();
+      // Get location (Best effort)
+      Map<String, double> location = {
+        'latitude': 0.0,
+        'longitude': 0.0,
+        'accuracy': 0.0,
+      };
+
+      try {
+        location = await _getCurrentLocation();
+      } catch (e) {
+        print('Location fetch failed: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content:
+                  Text('Location unavailable. Proceeding with attendance...'),
+              duration: Duration(seconds: 2),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
 
       // Call API
       final result = await _apiService.scanQR(
