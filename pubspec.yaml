@@ -2,7 +2,7 @@ name: student_app
 description: "IIITNR Attendance Student App"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.5.3
