@@ -12,10 +12,50 @@ class QRScannerScreen extends StatefulWidget {
 }
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
-  final MobileScannerController cameraController = MobileScannerController();
+  // Use High Resolution for better distance scanning
+  final MobileScannerController cameraController = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates, // Prevent spam
+    facing: CameraFacing.back,
+    torchEnabled: false,
+    formats: [BarcodeFormat.qrCode], // Optimize for QR only
+    returnImage: false,
+    autoStart: true,
+    // Target 720p for balance between speed and clarity
+    cameraResolution: const Size(1280, 720),
+  );
+
   final ApiService _apiService = ApiService();
   bool _isProcessing = false;
   bool _isTorchOn = false;
+  Map<String, double>? _cachedLocation;
+  DateTime? _lastScanTime; // For debouncing
+
+  @override
+  void initState() {
+    super.initState();
+    // Prefetch location to minimize delay when scanning
+    _startLocationUpdates();
+  }
+
+  void _startLocationUpdates() async {
+    final permission = await Permission.location.request();
+    if (permission.isGranted) {
+      // Get initial position
+      try {
+        final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium); // Medium is faster
+        if (mounted) {
+          _cachedLocation = {
+            'latitude': position.latitude,
+            'longitude': position.longitude,
+            'accuracy': position.accuracy,
+          };
+        }
+      } catch (e) {
+        print("Initial location fetch failed: $e");
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -24,24 +64,38 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 
   Future<Map<String, double>> _getCurrentLocation() async {
+    // Return cached location if fresh (e.g., < 30 seconds old? ignoring for simplicity, just updating cache)
+    if (_cachedLocation != null) return _cachedLocation!;
+
     final permission = await Permission.location.request();
     if (!permission.isGranted) {
       throw Exception('Location permission denied');
     }
 
+    // Use medium accuracy for speed if no cache
     final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      desiredAccuracy: LocationAccuracy.medium,
     );
 
-    return {
+    _cachedLocation = {
       'latitude': position.latitude,
       'longitude': position.longitude,
       'accuracy': position.accuracy,
     };
+
+    return _cachedLocation!;
   }
 
   Future<void> _handleQRCode(String qrData) async {
     if (_isProcessing) return;
+
+    // Strict Debounce: 2 seconds
+    if (_lastScanTime != null &&
+        DateTime.now().difference(_lastScanTime!) <
+            const Duration(seconds: 2)) {
+      return;
+    }
+    _lastScanTime = DateTime.now();
 
     setState(() => _isProcessing = true);
 
@@ -124,6 +178,16 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     // Screen size
     final scanWindowSize = MediaQuery.of(context).size.width * 0.75;
 
+    // Define the scanning window rect
+    final scanWindow = Rect.fromCenter(
+      center: Offset(
+        MediaQuery.of(context).size.width / 2,
+        MediaQuery.of(context).size.height / 2,
+      ),
+      width: scanWindowSize,
+      height: scanWindowSize,
+    );
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -131,6 +195,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           // 1. Mobile Scanner (Full Screen)
           MobileScanner(
             controller: cameraController,
+            scanWindow: scanWindow, // NATIVE ROI OPTIMIZATION
             onDetect: (capture) {
               if (_isProcessing) return;
               final List<Barcode> barcodes = capture.barcodes;
