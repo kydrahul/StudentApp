@@ -23,13 +23,13 @@ class CustomSearchBar extends StatelessWidget {
             ),
           ],
         ),
-        child: TextField(
+        child: const TextField(
           decoration: InputDecoration(
             hintText: "Search courses or faculty...",
-            hintStyle: const TextStyle(color: AppColors.gray400, fontSize: 14),
-            prefixIcon: const Icon(LucideIcons.search, color: AppColors.gray400, size: 20),
+            hintStyle: TextStyle(color: AppColors.gray400, fontSize: 14),
+            prefixIcon: Icon(LucideIcons.search, color: AppColors.gray400, size: 20),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            contentPadding: EdgeInsets.symmetric(vertical: 16),
           ),
         ),
       ),

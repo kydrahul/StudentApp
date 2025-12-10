@@ -1,5 +1,6 @@
 class ScheduleItem {
   final int id;
+  final String courseId; // Added courseId
   final int start;
   final int end;
   final String subject;
@@ -10,6 +11,7 @@ class ScheduleItem {
 
   ScheduleItem({
     required this.id,
+    required this.courseId,
     required this.start,
     required this.end,
     required this.subject,
@@ -32,6 +34,7 @@ class ScheduleItem {
       id: json['id'] is String
           ? int.tryParse(json['id']) ?? 0
           : json['id'] ?? 0,
+      courseId: json['courseId']?.toString() ?? '',
       start: int.tryParse(startStr) ?? 9,
       end: int.tryParse(endStr) ?? 10,
       subject: json['courseName'] ?? '',
@@ -72,7 +75,7 @@ class Course {
     return Course(
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
-      faculty: json['faculty'] ?? '',
+      faculty: json['facultyName'] ?? json['faculty'] ?? '',
       credits: json['credits'] ?? 0,
       attendance: json['attendance'] ?? 0,
       totalClasses: json['totalClasses'] ?? 0,

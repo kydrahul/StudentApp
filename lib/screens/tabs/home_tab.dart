@@ -11,6 +11,7 @@ import '../../widgets/cards/class_item_card.dart';
 import '../../widgets/cards/idle_item_card.dart';
 
 import '../weekly_timetable_screen.dart';
+import '../course_detail_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -47,6 +48,42 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
+  void _handleClassTap(String courseId) async {
+    if (courseId.isEmpty) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // Get all courses (should be cached)
+      final courses = await _apiService.getCourses();
+      if (!mounted) return;
+      Navigator.pop(context); // Hide loading
+
+      final course = courses.firstWhere(
+        (c) => c.id == courseId,
+        orElse: () => throw Exception('Course not found'),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CourseDetailScreen(course: course),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Hide loading if still showing
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open details: $e')),
+      );
+    }
+  }
+
   Future<void> _fetchSchedule() async {
     try {
       final timetableData = await _apiService.getTimetable();
@@ -58,7 +95,6 @@ class _HomeTabState extends State<HomeTab> {
           return ScheduleItem.fromJson({
             ...json,
             'status': 'Upcoming', // Default status
-            'attendance': 0, // Default attendance
           });
         }).toList();
       });
@@ -319,6 +355,7 @@ class _HomeTabState extends State<HomeTab> {
                                 (c) => c.start == hour,
                                 orElse: () => ScheduleItem(
                                     id: -1,
+                                    courseId: "",
                                     start: -1,
                                     end: -1,
                                     subject: "",
@@ -340,6 +377,8 @@ class _HomeTabState extends State<HomeTab> {
                                   instructor: classItem.faculty,
                                   credits: classItem.credits,
                                   attendance: classItem.attendance,
+                                  onTap: () =>
+                                      _handleClassTap(classItem.courseId),
                                 );
                               } else {
                                 return IdleItemCard(time: timeStr);

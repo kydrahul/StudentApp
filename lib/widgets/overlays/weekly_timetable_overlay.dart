@@ -18,7 +18,7 @@ class WeeklyTimetableOverlay extends StatelessWidget {
           children: [
             // Header - Ultra compressed
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.white,
                 border: Border(
                   bottom: BorderSide(color: AppColors.gray300),
@@ -28,7 +28,7 @@ class WeeklyTimetableOverlay extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -40,7 +40,7 @@ class WeeklyTimetableOverlay extends StatelessWidget {
                           height: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         "Spring",
                         style: TextStyle(
@@ -62,7 +62,7 @@ class WeeklyTimetableOverlay extends StatelessWidget {
                           border: Border.all(color: AppColors.gray200),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(
+                        child: const Text(
                           "3rd sem DSAI 2025",
                           style: TextStyle(
                             fontSize: 10,
@@ -76,7 +76,7 @@ class WeeklyTimetableOverlay extends StatelessWidget {
                         onTap: onClose,
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: AppColors.gray100,
                             shape: BoxShape.circle,
                           ),

@@ -73,7 +73,7 @@ class _WeeklyTimetableScreenState extends State<WeeklyTimetableScreen> {
           children: [
             // Header - Simplified
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.white,
                 border: Border(
                   bottom: BorderSide(color: AppColors.gray300),
@@ -98,7 +98,7 @@ class _WeeklyTimetableScreenState extends State<WeeklyTimetableScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Column(
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -110,7 +110,7 @@ class _WeeklyTimetableScreenState extends State<WeeklyTimetableScreen> {
                           height: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         "Spring / 3rd / DSAI / 2025",
                         style: TextStyle(

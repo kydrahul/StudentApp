@@ -11,6 +11,7 @@ class ClassItemCard extends StatelessWidget {
   final String instructor;
   final int credits;
   final int attendance;
+  final VoidCallback? onTap;
 
   const ClassItemCard({
     super.key,
@@ -21,6 +22,7 @@ class ClassItemCard extends StatelessWidget {
     required this.instructor,
     required this.credits,
     required this.attendance,
+    this.onTap,
   });
 
   Color _getStatusColor(String status) {
@@ -61,7 +63,11 @@ class ClassItemCard extends StatelessWidget {
             width: 60,
             child: Column(
               children: [
-                Text(startTime, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold, color: AppColors.gray800, fontSize: 14)),
+                Text(startTime,
+                    style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.gray800,
+                        fontSize: 14)),
                 Text(endTime, style: AppTextStyles.label),
                 if (status == 'Upcoming') ...[
                   const SizedBox(height: 4),
@@ -78,9 +84,9 @@ class ClassItemCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Card
           Expanded(
             child: Container(
@@ -105,11 +111,14 @@ class ClassItemCard extends StatelessWidget {
                     children: [
                       Text(subject, style: AppTextStyles.h4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: _getStatusBg(status),
                           borderRadius: BorderRadius.circular(100),
-                          border: Border.all(color: _getStatusBg(status).withOpacity(0.5)), // slightly darker border
+                          border: Border.all(
+                              color: _getStatusBg(status)
+                                  .withOpacity(0.5)), // slightly darker border
                         ),
                         child: Text(
                           status,
@@ -123,9 +132,11 @@ class ClassItemCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(instructor, style: AppTextStyles.bodySmall.copyWith(color: AppColors.gray500, fontWeight: FontWeight.w500)),
+                  Text(instructor,
+                      style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.gray500,
+                          fontWeight: FontWeight.w500)),
                   const SizedBox(height: 12),
-                  
                   Container(
                     padding: const EdgeInsets.only(top: 12),
                     decoration: const BoxDecoration(
@@ -141,17 +152,21 @@ class ClassItemCard extends StatelessWidget {
                               width: 1,
                               height: 24,
                               color: AppColors.gray100,
-                              margin: const EdgeInsets.symmetric(horizontal: 12),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 12),
                             ),
                             _buildStat(
                               "ATTENDANCE",
                               "$attendance%",
-                              valueColor: attendance < 75 ? AppColors.red500 : AppColors.green600,
+                              valueColor: attendance < 75
+                                  ? AppColors.red500
+                                  : AppColors.green600,
                             ),
                           ],
                         ),
                         if (status == 'Upcoming')
-                          const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.gray300),
+                          const Icon(LucideIcons.chevronRight,
+                              size: 16, color: AppColors.gray300),
                       ],
                     ),
                   ),
