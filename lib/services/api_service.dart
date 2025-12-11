@@ -37,11 +37,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("🔍 DEBUG_PROFILE_RAW: ${response.body}");
         return data['student'];
       } else {
-        print(
-            "❌ DEBUG_PROFILE_ERROR: ${response.statusCode} - ${response.body}");
         if (response.statusCode == 404) {
           throw Exception('Profile not found');
         } else {
