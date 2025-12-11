@@ -2,37 +2,54 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import 'auth_service.dart';
+import 'device_service.dart';
 
 class ApiService {
   final AuthService _authService = AuthService();
+  final DeviceService _deviceService = DeviceService();
 
   Future<Map<String, String>> _getHeaders() async {
     final token = await _authService.getToken();
+    final deviceId = await _deviceService.getDeviceId();
     return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ${token ?? ''}',
+      'x-device-id': deviceId,
     };
   }
 
   // Get Student Profile
-  Future<Map<String, dynamic>> getProfile() async {
+  Future<Map<String, dynamic>> getProfile(
+      {bool checkProfileExists = false}) async {
     try {
       final headers = await _getHeaders();
+      // Add nocache query param if checking for profile existence
+      final url = checkProfileExists
+          ? '${AppConfig.baseUrl}/student/profile?nocache=true'
+          : '${AppConfig.baseUrl}/student/profile';
+
       final response = await http
           .get(
-            Uri.parse('${AppConfig.baseUrl}/student/profile'),
+            Uri.parse(url),
             headers: headers,
           )
           .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['student'] ?? {};
-      } else if (response.statusCode == 404) {
-        throw Exception(
-            'Profile not found. Please complete your profile setup.');
+        print("🔍 DEBUG_PROFILE_RAW: ${response.body}");
+        return data['student'];
       } else {
-        throw Exception('Failed to fetch profile: ${response.body}');
+        print(
+            "❌ DEBUG_PROFILE_ERROR: ${response.statusCode} - ${response.body}");
+        if (response.statusCode == 404) {
+          throw Exception('Profile not found');
+        } else {
+          // Propagate error message for UI to show (and NOT redirect to setup)
+          final errorData = json.decode(response.body);
+          throw Exception(
+              'Server Error ${response.statusCode}: ${errorData['details'] ?? errorData['error'] ?? response.body}');
+        }
       }
     } catch (e) {
       print('Error in getProfile: $e');
@@ -76,6 +93,8 @@ class ApiService {
     required String department,
     required int passingYear,
   }) async {
+    final deviceId = await _deviceService.getDeviceId();
+
     final response = await http.post(
       Uri.parse('${AppConfig.baseUrl}/student/profile'),
       headers: await _getHeaders(),
@@ -84,11 +103,15 @@ class ApiService {
         'rollNo': rollNo,
         'department': department,
         'passingYear': passingYear,
+        'deviceId': deviceId,
       }),
     );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
+    } else if (response.statusCode == 403) {
+      final error = jsonDecode(response.body);
+      throw DeviceMismatchException(error['message'] ?? 'Device mismatch');
     } else {
       throw Exception('Failed to create profile: ${response.body}');
     }
@@ -199,4 +222,13 @@ class ApiService {
       throw Exception('Failed to fetch attendance history');
     }
   }
+}
+
+// Custom exception for device mismatch
+class DeviceMismatchException implements Exception {
+  final String message;
+  DeviceMismatchException(this.message);
+
+  @override
+  String toString() => message;
 }

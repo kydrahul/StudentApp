@@ -45,17 +45,26 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Check if profile exists
+      // Check if profile exists (bypass cache to verify real DB state)
       try {
-        await _apiService.getProfile();
+        await _apiService.getProfile(checkProfileExists: true);
         // Profile exists, navigate to home
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/home');
         }
       } catch (e) {
-        // Profile doesn't exist, navigate to profile setup
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/profile-setup');
+        if (e.toString().contains('Profile not found')) {
+          // Profile doesn't exist, navigate to profile setup
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/profile-setup');
+          }
+        } else {
+          // Other error (e.g. 500), show error message
+          setState(() {
+            _errorMessage =
+                'Login Error: ${e.toString().replaceAll("Exception:", "")}';
+            _isLoading = false;
+          });
         }
       }
     } catch (e) {

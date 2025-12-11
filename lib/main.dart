@@ -10,6 +10,7 @@ import 'screens/attendance_history_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/not_found_screen.dart';
 import 'services/auth_service.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,11 +23,11 @@ void main() async {
     debugPrint('Firebase initialization error: $e');
   }
 
-  // Check for logged in user
-  final authService = AuthService();
-  final isLoggedIn = authService.currentUser != null;
+  // Check for logged in user (Logic moved to SplashScreen)
+  // final authService = AuthService();
+  // final isLoggedIn = authService.currentUser != null;
 
-  runApp(StudentApp(initialRoute: isLoggedIn ? '/home' : '/login'));
+  runApp(const StudentApp(initialRoute: '/'));
 }
 
 class StudentApp extends StatelessWidget {
@@ -51,6 +52,7 @@ class StudentApp extends StatelessWidget {
       ),
       initialRoute: initialRoute,
       routes: {
+        '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/profile-setup': (context) => const ProfileSetupScreen(),
         '/qr-scanner': (context) => const QRScannerScreen(),

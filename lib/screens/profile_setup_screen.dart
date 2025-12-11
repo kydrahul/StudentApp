@@ -68,6 +68,51 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               _buildConfirmRow('Roll Number', _rollNoController.text.trim()),
               _buildConfirmRow('Department', _selectedDepartment!),
               _buildConfirmRow('Passing Year', _selectedPassingYear!),
+              const SizedBox(height: 16),
+              // Device Binding Information
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.blue50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.blue200),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.phonelink_lock,
+                      color: AppColors.blue600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Device Binding',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.blue700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'This device will be permanently bound to your account for security. You won\'t be able to use another device.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.gray700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -82,7 +127,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               backgroundColor: AppColors.blue600,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Confirm'),
+            child: const Text('Confirm & Bind Device'),
           ),
         ],
       ),

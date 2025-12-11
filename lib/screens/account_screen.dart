@@ -194,14 +194,21 @@ class _AccountScreenState extends State<AccountScreen> {
                                   _buildDetailRow(
                                       "Roll Number",
                                       _profileData?['rollNo']?.toString() ??
+                                          _profileData?['rollNumber']
+                                              ?.toString() ??
                                           'N/A'),
                                   _buildDivider(),
-                                  _buildDetailRow("Department",
-                                      _profileData?['department'] ?? 'N/A'),
+                                  _buildDetailRow(
+                                      "Department",
+                                      _profileData?['department'] ??
+                                          _profileData?['branch'] ??
+                                          'N/A'),
                                   _buildDivider(),
                                   _buildDetailRow(
                                       "Passing Year",
                                       _profileData?['passingYear']
+                                              ?.toString() ??
+                                          _profileData?['passingOutYear']
                                               ?.toString() ??
                                           'N/A'),
                                   _buildDivider(),
