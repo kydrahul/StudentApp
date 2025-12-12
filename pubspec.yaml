@@ -27,6 +27,7 @@ dependencies:
   shared_preferences: ^2.3.4
   flutter_secure_storage: ^9.2.2
   device_info_plus: ^10.1.2
+  local_auth: ^2.3.0
 
 
 # Forces compatible Android plugin version

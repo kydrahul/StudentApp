@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../constants/colors.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../services/biometric_service.dart';
+import 'package:flutter/services.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,8 +39,31 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       // Pass true to bypass cache and verify real DB existence
       await _apiService.getProfile(checkProfileExists: true);
-      // Profile exists, go to home
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
+
+      // Profile exists, now check Biometrics
+      if (mounted) {
+        setState(() {
+          // Update UI to show "Authenticating..."? Or just let the system dialog show
+        });
+
+        final biometricService = BiometricService();
+        final canCheck = await biometricService.checkBiometrics();
+
+        if (canCheck) {
+          final authenticated = await biometricService.authenticate();
+          if (authenticated) {
+            if (mounted) Navigator.pushReplacementNamed(context, '/home');
+          } else {
+            // Biometric failed
+            if (mounted) {
+              _showAuthFailedDialog();
+            }
+          }
+        } else {
+          // No hardware support, proceed to home safely
+          if (mounted) Navigator.pushReplacementNamed(context, '/home');
+        }
+      }
     } catch (e) {
       print('Profile check failed: $e');
 
@@ -75,6 +100,30 @@ class _SplashScreenState extends State<SplashScreen> {
         }
       }
     }
+  }
+
+  void _showAuthFailedDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Authentication Required'),
+        content: const Text('Please authenticate to access the app.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _checkAuthAndNavigate(); // Retry sequence
+            },
+            child: const Text('Retry'),
+          ),
+          TextButton(
+            onPressed: () => SystemNavigator.pop(), // Exit app
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

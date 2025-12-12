@@ -89,88 +89,92 @@ class ClassItemCard extends StatelessWidget {
 
           // Card
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.gray100),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(subject, style: AppTextStyles.h4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _getStatusBg(status),
-                          borderRadius: BorderRadius.circular(100),
-                          border: Border.all(
-                              color: _getStatusBg(status)
-                                  .withOpacity(0.5)), // slightly darker border
-                        ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: _getStatusColor(status),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(instructor,
-                      style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.gray500,
-                          fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.only(top: 12),
-                    decoration: const BoxDecoration(
-                      border: Border(top: BorderSide(color: AppColors.gray50)),
+            child: GestureDetector(
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.gray100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    child: Row(
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            _buildStat("CREDITS", credits.toString()),
-                            Container(
-                              width: 1,
-                              height: 24,
-                              color: AppColors.gray100,
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                        Text(subject, style: AppTextStyles.h4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getStatusBg(status),
+                            borderRadius: BorderRadius.circular(100),
+                            border: Border.all(
+                                color: _getStatusBg(status).withOpacity(
+                                    0.5)), // slightly darker border
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: _getStatusColor(status),
                             ),
-                            _buildStat(
-                              "ATTENDANCE",
-                              "$attendance%",
-                              valueColor: attendance < 75
-                                  ? AppColors.red500
-                                  : AppColors.green600,
-                            ),
-                          ],
+                          ),
                         ),
-                        if (status == 'Upcoming')
-                          const Icon(LucideIcons.chevronRight,
-                              size: 16, color: AppColors.gray300),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(instructor,
+                        style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.gray500,
+                            fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.only(top: 12),
+                      decoration: const BoxDecoration(
+                        border:
+                            Border(top: BorderSide(color: AppColors.gray50)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              _buildStat("CREDITS", credits.toString()),
+                              Container(
+                                width: 1,
+                                height: 24,
+                                color: AppColors.gray100,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                              ),
+                              _buildStat(
+                                "ATTENDANCE",
+                                "$attendance%",
+                                valueColor: attendance < 75
+                                    ? AppColors.red500
+                                    : AppColors.green600,
+                              ),
+                            ],
+                          ),
+                          if (status == 'Upcoming')
+                            const Icon(LucideIcons.chevronRight,
+                                size: 16, color: AppColors.gray300),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

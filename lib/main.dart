@@ -10,6 +10,7 @@ import 'screens/attendance_history_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/not_found_screen.dart';
 import 'services/auth_service.dart';
+import 'services/biometric_service.dart';
 import 'screens/splash_screen.dart';
 
 void main() async {
@@ -30,15 +31,63 @@ void main() async {
   runApp(const StudentApp(initialRoute: '/'));
 }
 
-class StudentApp extends StatelessWidget {
+class StudentApp extends StatefulWidget {
   final String initialRoute;
 
   const StudentApp({super.key, required this.initialRoute});
 
   @override
+  State<StudentApp> createState() => _StudentAppState();
+}
+
+class _StudentAppState extends State<StudentApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Ignore if we are currently authenticating (the biometric prompt caused the pause)
+      if (BiometricService.isAuthenticating) return;
+
+      // Grace Period: If we JUST authenticated (e.g. < 5 seconds ago),
+      // ignore this resume event (it's likely from the biometric dialog closing)
+      if (BiometricService.lastAuthTime != null) {
+        final diff = DateTime.now().difference(BiometricService.lastAuthTime!);
+        if (diff.inSeconds < 5) {
+          return;
+        }
+      }
+
+      // App came to foreground - verify auth again
+      // Only redirect if NOT already on splash screen or login/setup
+      // But simple way: just push Splash Screen if user is supposed to be logged in
+      final authService = AuthService();
+      if (authService.currentUser != null) {
+        // We are logged in, so verify again
+        // Use navigator key if available, or just rely on context if we had one global
+        // Since we are at Root, we need a GlobalKey<NavigatorState> to navigate from here.
+        // Let's assume standard navigation for now or add GlobalKey.
+        navigatorKey.currentState
+            ?.pushNamedAndRemoveUntil('/', (route) => false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'IIITNR Attendance',
+      navigatorKey: navigatorKey, // Add this
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -50,7 +99,7 @@ class StudentApp extends StatelessWidget {
         ),
         textTheme: GoogleFonts.robotoTextTheme(),
       ),
-      initialRoute: initialRoute,
+      initialRoute: widget.initialRoute,
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -67,3 +116,6 @@ class StudentApp extends StatelessWidget {
     );
   }
 }
+
+// Global navigator key to allow navigation from outside context
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

@@ -212,7 +212,7 @@ class _WeeklyTimetableScreenState extends State<WeeklyTimetableScreen> {
             .split(':')[0]
             .padLeft(2, '0');
         if (classTime == slotTime) {
-          return "${cls['courseCode']}\n${cls['room']}";
+          return "${cls['courseName']}\n${cls['facultyName']}";
         }
       }
       return "";
@@ -341,7 +341,7 @@ class _WeeklyTimetableScreenState extends State<WeeklyTimetableScreen> {
       padding: padding,
       alignment: Alignment.center,
       child: Text(
-        text.toUpperCase(),
+        text, // Removed toUpperCase()
         style: textStyle,
         textAlign: TextAlign.center,
         maxLines: 4,

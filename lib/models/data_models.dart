@@ -38,7 +38,7 @@ class ScheduleItem {
       start: int.tryParse(startStr) ?? 9,
       end: int.tryParse(endStr) ?? 10,
       subject: json['courseName'] ?? '',
-      faculty: json['faculty'] ?? '',
+      faculty: json['facultyName'] ?? json['faculty'] ?? '',
       credits: json['credits'] ?? 3,
       attendance: json['attendance'] ?? 0,
       status: json['status'] ?? 'Upcoming',

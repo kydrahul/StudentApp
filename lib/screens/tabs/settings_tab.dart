@@ -4,6 +4,9 @@ import '../../constants/colors.dart';
 import '../../constants/text_styles.dart';
 import '../account_screen.dart';
 import '../../services/auth_service.dart';
+import '../settings/terms_screen.dart';
+import '../settings/privacy_screen.dart';
+import '../settings/about_screen.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
@@ -52,7 +55,13 @@ class SettingsTab extends StatelessWidget {
                 iconColor: AppColors.gray600,
                 iconBg: AppColors.gray50,
                 label: "Terms & Conditions",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const TermsAndConditionsScreen()),
+                  );
+                },
               ),
               _buildDivider(),
               _buildSettingItem(
@@ -61,7 +70,13 @@ class SettingsTab extends StatelessWidget {
                 iconColor: AppColors.gray600,
                 iconBg: AppColors.gray50,
                 label: "Privacy Policy",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PrivacyPolicyScreen()),
+                  );
+                },
               ),
               _buildDivider(),
               _buildSettingItem(
@@ -70,7 +85,13 @@ class SettingsTab extends StatelessWidget {
                 iconColor: AppColors.gray600,
                 iconBg: AppColors.gray50,
                 label: "About",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const AboutScreen()),
+                  );
+                },
               ),
               _buildDivider(),
               _buildSettingItem(
