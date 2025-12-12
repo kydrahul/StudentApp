@@ -199,19 +199,26 @@ class _WeeklyTimetableScreenState extends State<WeeklyTimetableScreen> {
   Widget _buildTimeRow(String time) {
     // Helper to find class for a specific day and time
     String getClassFor(String day, String timeSlot) {
-      if (_timetable[day] == null) return "";
+      if (_timetable[day] == null) {
+        print("DEBUG: No data for $day");
+        return "";
+      }
 
       final classes = _timetable[day] as List<dynamic>;
       // Normalize time strings for comparison (e.g., "9:00" vs "09:00 - 10:00")
       final slotTime = timeSlot.split(':')[0].padLeft(2, '0');
 
       for (var cls in classes) {
+        print(
+            "DEBUG: Checking class ${cls['courseName']} at ${cls['time']} against slot $slotTime");
         final classTime = cls['time']
             .toString()
             .split(' - ')[0]
             .split(':')[0]
             .padLeft(2, '0');
+
         if (classTime == slotTime) {
+          print("DEBUG: MATCH FOUND for $day $timeSlot: ${cls['courseName']}");
           return "${cls['courseName']}\n${cls['facultyName']}";
         }
       }

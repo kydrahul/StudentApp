@@ -43,7 +43,8 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       // Get initial position
       try {
         final position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.medium); // Medium is faster
+            desiredAccuracy:
+                LocationAccuracy.high); // High for better precision
         if (mounted) {
           _cachedLocation = {
             'latitude': position.latitude,
@@ -72,9 +73,9 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       throw Exception('Location permission denied');
     }
 
-    // Use medium accuracy for speed if no cache
+    // Use high accuracy for class attendance (requires GPS usually)
     final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.medium,
+      desiredAccuracy: LocationAccuracy.high,
     );
 
     _cachedLocation = {
@@ -157,7 +158,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Error'),
-            content: Text(e.toString()),
+            content: Text(e.toString().replaceAll('Exception: ', '')),
             actions: [
               TextButton(
                 onPressed: () {
@@ -195,7 +196,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           // 1. Mobile Scanner (Full Screen)
           MobileScanner(
             controller: cameraController,
-            scanWindow: scanWindow, // NATIVE ROI OPTIMIZATION
+            // scanWindow: scanWindow, // Removed to allow full-screen scanning (like payment apps)
             onDetect: (capture) {
               if (_isProcessing) return;
               final List<Barcode> barcodes = capture.barcodes;
@@ -211,14 +212,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           // 2. Dark Overlay with Cutout
           CustomPaint(
             painter: ScannerOverlayPainter(
-              scanWindow: Rect.fromCenter(
-                center: Offset(
-                  MediaQuery.of(context).size.width / 2,
-                  MediaQuery.of(context).size.height / 2,
-                ),
-                width: scanWindowSize,
-                height: scanWindowSize,
-              ),
+              scanWindow: scanWindow, // Reusing the variable
               borderRadius: 20.0,
             ),
             child: Container(),

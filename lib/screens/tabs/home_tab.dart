@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../constants/colors.dart';
 import '../../constants/text_styles.dart';
 import '../../models/data_models.dart';
@@ -118,8 +116,66 @@ class _HomeTabState extends State<HomeTab> {
     });
   }
 
-  void _showScanner() {
+  // State variables for removed verify logic are gone
+
+  // Direct Scan Logic
+  void _showScanner() async {
+    // Optional: Pre-check permissions here if desired, but QRScreen handles it too.
+    // Let's just navigate.
     Navigator.pushNamed(context, '/qr-scanner');
+  }
+
+  // REPLACED _buildScanButton
+  Widget _buildScanButton() {
+    return GestureDetector(
+      onTap: _showScanner,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        decoration: BoxDecoration(
+          color: AppColors.blue600,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.blue600.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(LucideIcons.qrCode,
+                      color: AppColors.white, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Scan QR Code",
+                        style: AppTextStyles.h3.copyWith(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.bold)),
+                    Text("Mark your attendance",
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.blue100)),
+                  ],
+                ),
+              ],
+            ),
+            const Icon(LucideIcons.chevronRight, color: AppColors.white),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showTimetable() {
@@ -129,66 +185,6 @@ class _HomeTabState extends State<HomeTab> {
         builder: (context) => const WeeklyTimetableScreen(),
       ),
     );
-  }
-
-  void _handleVerifyLocation() async {
-    // ... existing verify logic ...
-    setState(() {
-      locationStatus = 'verifying';
-    });
-
-    try {
-      final permission = await Permission.location.request();
-      if (!permission.isGranted) {
-        setState(() => locationStatus = 'neutral');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Location permission is required'),
-                backgroundColor: Colors.red),
-          );
-        }
-        return;
-      }
-
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(const Duration(seconds: 10));
-
-      final result = await _apiService.verifyLocation(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        accuracy: position.accuracy,
-      );
-
-      if (mounted) {
-        setState(() {
-          locationStatus = 'success';
-          canScan = true;
-          lastVerified = TimeOfDay.now().format(context);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(result['message'] ?? 'Location verified!'),
-              backgroundColor: Colors.green),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          locationStatus = 'error';
-          canScan = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
-              backgroundColor: Colors.red),
-        );
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) setState(() => locationStatus = 'neutral');
-        });
-      }
-    }
   }
 
   void _changeDay(String direction) {
@@ -379,17 +375,7 @@ class _HomeTabState extends State<HomeTab> {
           // Actions
           _buildScanButton(),
           const SizedBox(height: 12),
-          _buildVerifyButton(),
-          if (locationStatus == 'success')
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                "Last verified: $lastVerified • Valid for 1h",
-                style:
-                    AppTextStyles.bodySmall.copyWith(color: AppColors.gray400),
-                textAlign: TextAlign.center,
-              ),
-            ),
+          // REMOVED _buildVerifyButton call
 
           const SizedBox(height: 32),
 
@@ -518,111 +504,6 @@ class _HomeTabState extends State<HomeTab> {
                   ],
                 ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildScanButton() {
-    return GestureDetector(
-      onTap: canScan ? _showScanner : null,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: BoxDecoration(
-          color: canScan ? AppColors.blue600 : AppColors.gray100,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: canScan
-              ? [
-                  BoxShadow(
-                    color: AppColors.blue600.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ]
-              : [],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: canScan
-                        ? AppColors.white.withOpacity(0.2)
-                        : AppColors.gray200,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(LucideIcons.qrCode,
-                      color: canScan ? AppColors.white : AppColors.gray400,
-                      size: 24),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Scan QR Code",
-                        style: AppTextStyles.h3.copyWith(
-                            color:
-                                canScan ? AppColors.white : AppColors.gray400,
-                            fontWeight: FontWeight.bold)),
-                    Text(canScan ? "Ready to scan" : "Verify location first",
-                        style: AppTextStyles.bodySmall.copyWith(
-                            color: canScan
-                                ? AppColors.blue100
-                                : AppColors.gray400)),
-                  ],
-                ),
-              ],
-            ),
-            if (canScan)
-              const Icon(LucideIcons.chevronRight, color: AppColors.white),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVerifyButton() {
-    Color bgColor = AppColors.white;
-    Color textColor = AppColors.blue600;
-    IconData icon = LucideIcons.mapPin;
-    String text = "Verify Location";
-
-    if (locationStatus == 'verifying') {
-      bgColor = AppColors.gray50;
-      textColor = AppColors.gray500;
-      icon = LucideIcons.loader2;
-      text = "Checking...";
-    } else if (locationStatus == 'success') {
-      bgColor = AppColors.green50;
-      textColor = AppColors.green700;
-      icon = LucideIcons.checkCircle2;
-      text = "Location Verified";
-    }
-
-    return GestureDetector(
-      onTap: (locationStatus == 'success' || locationStatus == 'verifying')
-          ? null
-          : _handleVerifyLocation,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.gray100),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: textColor),
-            const SizedBox(width: 8),
-            Text(text,
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: textColor, fontWeight: FontWeight.bold)),
-          ],
-        ),
       ),
     );
   }

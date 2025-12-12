@@ -123,29 +123,52 @@ class ClassSchedule {
 class AttendanceRecord {
   final String id;
   final String date;
+  final String day; // Added day
   final String time;
+  final String type; // Added type
   final String status; // "Present", "Absent"
 
   AttendanceRecord({
     required this.id,
     required this.date,
+    required this.day,
     required this.time,
+    required this.type,
     required this.status,
   });
 
   factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
+    String dateStr = '';
+    String timeStr = '';
+    DateTime? dateTime;
+
+    if (json['markedAt'] != null) {
+      dateTime = DateTime.parse(json['markedAt']).toLocal();
+      dateStr = dateTime.toString().split(' ')[0];
+      timeStr = dateTime.toString().split(' ')[1].substring(0, 5);
+    } else {
+      dateStr = json['date'] ?? '';
+      timeStr = json['time'] ?? '';
+      if (dateStr.isNotEmpty) {
+        try {
+          dateTime = DateTime.parse(dateStr);
+        } catch (_) {}
+      }
+    }
+
+    // Derive day name from date if not provided
+    String dayStr = json['day'] ?? '';
+    if (dayStr.isEmpty && dateTime != null) {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      dayStr = days[dateTime.weekday - 1];
+    }
+
     return AttendanceRecord(
       id: json['id']?.toString() ?? '',
-      date: json['markedAt'] != null
-          ? DateTime.parse(json['markedAt']).toLocal().toString().split(' ')[0]
-          : (json['date'] ?? ''),
-      time: json['markedAt'] != null
-          ? DateTime.parse(json['markedAt'])
-              .toLocal()
-              .toString()
-              .split(' ')[1]
-              .substring(0, 5)
-          : (json['time'] ?? ''),
+      date: dateStr,
+      day: dayStr,
+      time: timeStr,
+      type: json['type'] ?? 'Theory', // Default to Theory if missing
       status: json['status'] == 'present' ? 'Present' : 'Absent',
     );
   }

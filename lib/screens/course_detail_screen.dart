@@ -380,9 +380,24 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 style: AppTextStyles.bodyMedium.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.gray800)),
-                            Text(item.time,
+                            const SizedBox(height: 2),
+                            Text("${item.day} • ${item.time}",
                                 style: AppTextStyles.bodySmall
-                                    .copyWith(color: AppColors.gray400)),
+                                    .copyWith(color: AppColors.gray500)),
+                            const SizedBox(height: 2),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.gray100,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.type,
+                                style: AppTextStyles.label.copyWith(
+                                    color: AppColors.gray600, fontSize: 10),
+                              ),
+                            ),
                           ],
                         ),
                         Container(
